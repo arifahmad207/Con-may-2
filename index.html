@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timezone Information</title>
+    <style>
+        /* CSS styles for the page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        #current-timezone {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        #address-input {
+            width: 300px;
+            height: 30px;
+            font-size: 16px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        #fetch-timezone-btn {
+            font-size: 16px;
+            padding: 5px 10px;
+        }
+
+        #timezone-info {
+            font-size: 18px;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Timezone Information</h1>
+    
+    <h2>Your Current Timezone:</h2>
+    <div id="current-timezone"></div>
+    
+    <h2>Get Timezone by Address:</h2>
+    <input type="text" id="address-input" placeholder="Enter address">
+    <button id="fetch-timezone-btn" onclick="fetchTimezoneByAddress()">Get Timezone</button>
+    <div id="timezone-info"></div>
+
+    <script>
+        // JavaScript code for fetching timezone information
+
+        // Function to display the user's current timezone
+        function displayCurrentTimezone(timezone) {
+            var currentTimezoneElement = document.getElementById('current-timezone');
+            currentTimezoneElement.innerHTML = "Current Timezone: " + timezone;
+        }
+
+        // Function to display the timezone for the entered address
+        function displayTimezoneInfo(timezone) {
+            var timezoneInfoElement = document.getElementById('timezone-info');
+            timezoneInfoElement.innerHTML = "Timezone for Entered Address: " + timezone;
+        }
+
+        // Function to fetch the user's current timezone using Geolocation API
+        function fetchCurrentTimezone() {
+            // Check if geolocation is supported by the browser
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var latitude = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+
+                    // Call the API to fetch the timezone using latitude and longitude
+                    fetchTimezone(latitude, longitude, displayCurrentTimezone);
+                }, function(error) {
+                    console.error(error.message);
+                });
+            } else {
+                console.error('Geolocation is not supported by your browser.');
+            }
+        }
+
+        // Function to fetch the timezone using latitude and longitude
+        function fetchTimezone(latitude, longitude, callback) {
+            // Make a request to the Google Maps Time Zone API
+            // Replace `API_KEY` with your actual API key
+            fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${latitude},${longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=API_KEY`)
+                .then(response => response.json())
+                .then(data => {
+                    var timezone = data.timeZoneId;
+                    callback(timezone);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        // Function to fetch the timezone based on the entered address
+        function fetchTimezoneByAddress() {
+            var addressInput = document.getElementById('address-input');
+            var address = addressInput.value;
+
+            // Call the Google Maps Geocoding API to convert the address to latitude and longitude
+            // Replace `API_KEY` with your actual API key
+            fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=API_KEY`)
+                .then(response => response.json())
+                .then(data => {
+                    var results = data.results;
+                    if (results.length > 0) {
+                        var latitude = results[0].geometry.location.lat;
+                        var longitude = results[0].geometry.location.lng;
+
+                        // Call the API to fetch the timezone using latitude and longitude
+                        fetchTimezone(latitude, longitude, displayTimezoneInfo);
+                    } else {
+                        console.error('No results found for the entered address.');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        // Fetch the user's current timezone on page load
+        fetchCurrentTimezone();
+    </script>
+</body>
+</html>
